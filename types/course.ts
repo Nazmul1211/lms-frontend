@@ -7,6 +7,7 @@ export interface InstructorSummary {
   email?: string;
   avatar?: string;
   bio?: string;
+  role?: string;
 }
 
 export interface LessonSummary {
@@ -14,6 +15,9 @@ export interface LessonSummary {
   title: string;
   duration?: string;
   order?: number;
+  content?: string;
+  videoUrl?: string;
+  isPreview?: boolean;
 }
 
 export interface Course {
@@ -29,5 +33,8 @@ export interface Course {
   enrolledStudentsCount?: number;
   instructor: InstructorSummary;
   lessons?: LessonSummary[];
+  whatYouWillLearn?: string[];
+  prerequisites?: string[];
   createdAt?: string;
+  updatedAt?: string;
 }
