@@ -40,5 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-*.md 
+# Documentation, API Reference & Plans (Excluded from Git / GitHub push)
+*.md
 !README.md
+docs/
+API_REFERENCE.md
+FRONTEND_PLAN.md
