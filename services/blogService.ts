@@ -152,12 +152,30 @@ function normalizeBlogPost(raw: any): BlogPost {
       }
     : defaultAuthor;
 
+  let content = raw.excerpt || "Full article content coming soon.";
+  if (typeof raw.content === "string" && raw.content.trim()) {
+    content = raw.content;
+  } else if (Array.isArray(raw.content)) {
+    const extracted = raw.content
+      .map((block: any) => {
+        if (block.children && Array.isArray(block.children)) {
+          return block.children.map((c: any) => c.text || "").join("");
+        }
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n\n");
+    if (extracted.trim()) {
+      content = extracted;
+    }
+  }
+
   return {
     id: raw.documentId || raw.id,
     title: raw.title || "Engineering Article",
     slug: raw.slug || "article",
     excerpt: raw.excerpt || "Architectural insights and deep dives for modern software engineers.",
-    content: raw.content || raw.excerpt || "Full article content coming soon.",
+    content,
     coverImage: raw.coverImageUrl || raw.coverImage || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=60",
     category: raw.category || "Engineering",
     status: raw.isPublished !== false ? "published" : "draft",
