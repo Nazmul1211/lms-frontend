@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { EnrolledCourse } from "@/types/student";
-import { PlayCircle, CheckCircle2, BookOpen, Clock, ArrowRight } from "lucide-react";
+import { PlayCircle, CheckCircle2, BookOpen, Clock, ArrowRight, Award } from "lucide-react";
 
 export default function EnrolledCourseCard({ course }: { course: EnrolledCourse }) {
   const isCompleted = course.progressPercentage === 100;
@@ -104,22 +104,33 @@ export default function EnrolledCourseCard({ course }: { course: EnrolledCourse 
                 </div>
               )}
             </div>
-            <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[110px]">
+            <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[90px] sm:max-w-[110px]">
               {course.instructor?.name}
             </span>
           </div>
 
-          <Link
-            href={`/student/courses/${course.courseId}/lessons/${targetLessonId}`}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-95 ${
-              isCompleted
-                ? "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
-                : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20"
-            }`}
-          >
-            <span>{isCompleted ? "Review Lessons" : "Continue"}</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Link
+              href={`/student/courses/${course.courseId}/quiz`}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/70 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold shadow-sm transition-all hover:scale-105 active:scale-95"
+              title="Take Course Certification Quiz"
+            >
+              <Award className="h-3.5 w-3.5" />
+              <span>Quiz</span>
+            </Link>
+
+            <Link
+              href={`/student/courses/${course.courseId}/lessons/${targetLessonId}`}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-95 ${
+                isCompleted
+                  ? "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
+                  : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20"
+              }`}
+            >
+              <span>{isCompleted ? "Review" : "Continue"}</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
 
       </div>
