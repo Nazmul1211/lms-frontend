@@ -22,7 +22,11 @@ export const getRoleType = (user: User | null): RoleType => {
 // Helper to access token in browser
 export const getAuthToken = (): string | null => {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("lms_auth_token");
+  const token = localStorage.getItem("lms_auth_token");
+  if (!token || token === "null" || token === "undefined" || token.trim() === "") {
+    return null;
+  }
+  return token;
 };
 
 export const setAuthToken = (token: string): void => {
@@ -35,8 +39,9 @@ export const removeAuthToken = (): void => {
   if (typeof window === "undefined") return;
   localStorage.removeItem("lms_auth_token");
   localStorage.removeItem("lms_user");
-  document.cookie = "lms_token=; path=/; max-age=0; SameSite=Lax";
-  document.cookie = "lms_role=; path=/; max-age=0; SameSite=Lax";
+  // Aggressively expire cookies with past date and max-age 0
+  document.cookie = "lms_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; SameSite=Lax";
+  document.cookie = "lms_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; SameSite=Lax";
 };
 
 export const getStoredUser = (): User | null => {

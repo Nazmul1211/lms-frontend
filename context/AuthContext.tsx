@@ -90,10 +90,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return data;
   };
 
-  const logout = () => {
+  const logout = (redirectTo: string = "/login") => {
     removeAuthToken();
     setToken(null);
     setUser(null);
+    if (typeof window !== "undefined") {
+      window.location.href = redirectTo;
+    }
   };
 
   // Helper to resolve role type cleanly

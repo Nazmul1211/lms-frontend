@@ -3,7 +3,14 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get("lms_token")?.value;
+  const rawToken = request.cookies.get("lms_token")?.value;
+  const token =
+    rawToken &&
+    rawToken !== "null" &&
+    rawToken !== "undefined" &&
+    rawToken.trim().length > 10
+      ? rawToken
+      : null;
   const role = (request.cookies.get("lms_role")?.value || "student").toLowerCase();
 
   // If already logged in and visiting login/register, redirect to role dashboard
