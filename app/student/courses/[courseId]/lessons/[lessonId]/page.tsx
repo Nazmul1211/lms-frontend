@@ -15,6 +15,7 @@ import { Course } from "@/types/course";
 import VideoPlayer from "@/components/student/VideoPlayer";
 import LessonSidebar from "@/components/student/LessonSidebar";
 import LessonNavigation from "@/components/student/LessonNavigation";
+import RichContentRenderer from "@/components/common/RichContentRenderer";
 import {
   Clock,
   BookOpen,
@@ -199,41 +200,8 @@ export default function LessonPlayerPage({
               )}
 
               {/* Formatted Lesson Guide & Notes */}
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 space-y-4 text-xs sm:text-sm leading-relaxed">
-                {currentLesson.content.split("\n\n").map((chunk, idx) => {
-                  const trimmed = chunk.trim();
-                  if (!trimmed) return null;
-
-                  if (trimmed.startsWith("### ")) {
-                    return (
-                      <h3 key={idx} className="text-base sm:text-lg font-bold text-slate-900 dark:text-white pt-2">
-                        {trimmed.replace("### ", "")}
-                      </h3>
-                    );
-                  }
-
-                  if (trimmed.startsWith("```")) {
-                    const code = trimmed.replace(/```[a-z]*\n?/g, "");
-                    return (
-                      <pre key={idx} className="p-4 rounded-xl bg-slate-950 text-slate-100 font-mono text-xs overflow-x-auto border border-slate-800">
-                        <code>{code}</code>
-                      </pre>
-                    );
-                  }
-
-                  if (trimmed.startsWith("1. ") || trimmed.startsWith("- ")) {
-                    const items = trimmed.split("\n");
-                    return (
-                      <ul key={idx} className="list-disc list-inside space-y-1.5 pl-2 text-slate-600 dark:text-slate-300">
-                        {items.map((item, i) => (
-                          <li key={i}>{item.replace(/^(-\s*|\d+\.\s*)/, "")}</li>
-                        ))}
-                      </ul>
-                    );
-                  }
-
-                  return <p key={idx}>{trimmed}</p>;
-                })}
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80">
+                <RichContentRenderer content={currentLesson.content} />
               </div>
 
               {/* Lesson Resources List */}

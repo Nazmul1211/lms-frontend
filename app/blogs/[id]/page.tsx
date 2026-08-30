@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { getBlogPostById } from "@/services/blogService";
 import { ChevronRight, Clock, Calendar, ArrowLeft, Share2, HelpCircle, User, Award } from "lucide-react";
+import RichContentRenderer from "@/components/common/RichContentRenderer";
 import type { Metadata } from "next";
 
 export async function generateMetadata({
@@ -146,38 +147,8 @@ export default async function BlogPostPage({
           )}
 
           {/* Formatted Article Content */}
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 leading-relaxed space-y-4 text-sm sm:text-base">
-            {post.content.split("\n\n").map((paragraph, idx) => {
-              const trimmed = paragraph.trim();
-              if (!trimmed) return null;
-
-              if (trimmed.startsWith("### ")) {
-                return (
-                  <h3 key={idx} className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white pt-4">
-                    {trimmed.replace("### ", "")}
-                  </h3>
-                );
-              }
-
-              if (trimmed.startsWith("- ") || trimmed.startsWith("1. ")) {
-                const items = trimmed.split("\n");
-                return (
-                  <ul key={idx} className="list-disc list-inside space-y-2 pl-2">
-                    {items.map((item, i) => (
-                      <li key={i} className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-                        {item.replace(/^(-\s*|\d+\.\s*)/, "")}
-                      </li>
-                    ))}
-                  </ul>
-                );
-              }
-
-              return (
-                <p key={idx} className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-                  {trimmed}
-                </p>
-              );
-            })}
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80">
+            <RichContentRenderer content={post.content} />
           </div>
 
           {/* Author Footer Bio */}
