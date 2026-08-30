@@ -37,32 +37,32 @@ export const setStoredUser = (user: User): void => {
   localStorage.setItem("lms_user", JSON.stringify(user));
 };
 
-// Preset demo accounts for quick role-based evaluation
+// Preset demo accounts matching seeded backend users
 export const demoAccounts = {
   student: {
-    identifier: "student@eduforge.com",
-    password: "password123",
+    identifier: "student@lms.com",
+    password: "Password123!",
     role: "student" as RoleType,
-    name: "John Student",
-    username: "john_student",
+    name: "Sarah Student",
+    username: "student_sarah",
   },
   instructor: {
-    identifier: "alex@eduforge.com",
-    password: "password123",
+    identifier: "instructor@lms.com",
+    password: "Password123!",
     role: "instructor" as RoleType,
     name: "Alex Rivera",
-    username: "alex_dev",
+    username: "instructor_alex",
   },
   content_manager: {
-    identifier: "manager@eduforge.com",
-    password: "password123",
+    identifier: "manager@lms.com",
+    password: "Password123!",
     role: "content_manager" as RoleType,
     name: "Elena Content",
-    username: "elena_manager",
+    username: "content_manager",
   },
   admin: {
-    identifier: "admin@eduforge.com",
-    password: "password123",
+    identifier: "admin@lms.com",
+    password: "Password123!",
     role: "admin" as RoleType,
     name: "System Admin",
     username: "admin_user",
@@ -74,62 +74,23 @@ export const demoAccounts = {
  * Matches POST /api/auth/local
  */
 export async function loginApi(credentials: LoginCredentials): Promise<AuthResponse> {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/local`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(credentials),
-    });
+  const res = await fetch(`${API_BASE_URL}/api/auth/local`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(credentials),
+  });
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData?.error?.message || "Invalid email or password");
-    }
-
-    const data: AuthResponse = await res.json();
-    if (data.jwt) {
-      setAuthToken(data.jwt);
-      setStoredUser(data.user);
-    }
-    return data;
-  } catch (error) {
-    // Fallback: Check if matching demo role presets for offline testing
-    const ident = credentials.identifier.toLowerCase();
-    let roleType: RoleType = "student";
-    let displayName = "Student User";
-
-    if (ident.includes("admin")) {
-      roleType = "admin";
-      displayName = "System Admin";
-    } else if (ident.includes("manager") || ident.includes("content")) {
-      roleType = "content_manager";
-      displayName = "Content Manager";
-    } else if (ident.includes("instructor") || ident.includes("alex") || ident.includes("teacher")) {
-      roleType = "instructor";
-      displayName = "Alex Rivera";
-    }
-
-    const mockUser: User = {
-      id: Math.floor(Math.random() * 1000) + 1,
-      username: credentials.identifier.split("@")[0] || "demo_user",
-      email: credentials.identifier.includes("@") ? credentials.identifier : `${credentials.identifier}@eduforge.com`,
-      name: displayName,
-      role: {
-        id: roleType === "admin" ? 1 : roleType === "content_manager" ? 2 : roleType === "instructor" ? 3 : 4,
-        name: roleType === "admin" ? "Admin" : roleType === "content_manager" ? "Content Manager" : roleType === "instructor" ? "Instructor" : "Student",
-        type: roleType,
-      },
-    };
-
-    const mockResponse: AuthResponse = {
-      jwt: "mock_jwt_token_" + Date.now(),
-      user: mockUser,
-    };
-
-    setAuthToken(mockResponse.jwt);
-    setStoredUser(mockResponse.user);
-    return mockResponse;
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData?.error?.message || "Invalid identifier or password. Please check your credentials.");
   }
+
+  const data: AuthResponse = await res.json();
+  if (data.jwt) {
+    setAuthToken(data.jwt);
+    setStoredUser(data.user);
+  }
+  return data;
 }
 
 /**
@@ -137,46 +98,23 @@ export async function loginApi(credentials: LoginCredentials): Promise<AuthRespo
  * Matches POST /api/auth/local/register
  */
 export async function registerApi(payload: RegisterPayload): Promise<AuthResponse> {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/local/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+  const res = await fetch(`${API_BASE_URL}/api/auth/local/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData?.error?.message || "Registration failed");
-    }
-
-    const data: AuthResponse = await res.json();
-    if (data.jwt) {
-      setAuthToken(data.jwt);
-      setStoredUser(data.user);
-    }
-    return data;
-  } catch {
-    const mockUser: User = {
-      id: Math.floor(Math.random() * 1000) + 20,
-      username: payload.username,
-      email: payload.email,
-      name: payload.username,
-      role: {
-        id: 4,
-        name: "Student",
-        type: "student",
-      },
-    };
-
-    const mockResponse: AuthResponse = {
-      jwt: "mock_jwt_token_" + Date.now(),
-      user: mockUser,
-    };
-
-    setAuthToken(mockResponse.jwt);
-    setStoredUser(mockResponse.user);
-    return mockResponse;
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData?.error?.message || "Registration failed. Email or username might already be in use.");
   }
+
+  const data: AuthResponse = await res.json();
+  if (data.jwt) {
+    setAuthToken(data.jwt);
+    setStoredUser(data.user);
+  }
+  return data;
 }
 
 /**

@@ -215,3 +215,49 @@ export async function submitQuiz(
 
   return result;
 }
+
+/**
+ * Create or update custom course quiz by Instructor
+ * Matches POST /api/quizzes
+ */
+export async function createQuizApi(
+  payload: {
+    title: string;
+    description: string;
+    passingScore: number;
+    course: string | number;
+    questions: {
+      questionText: string;
+      options: string[];
+      correctAnswerIndex: number;
+      explanation?: string;
+    }[];
+  },
+  token?: string
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  const authToken = token || getAuthToken();
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/quizzes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      },
+      body: JSON.stringify({
+        data: payload,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { success: false, error: err?.error?.message || "Failed to create quiz" };
+    }
+
+    const data = await res.json();
+    return { success: true, data: data.data || data };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Failed to connect to backend server" };
+  }
+}
+

@@ -121,13 +121,20 @@ export default function CourseHeader({ course }: { course: Course }) {
               </div>
             </div>
 
-            {/* Primary Action Button */}
+            {/* Action Buttons */}
             <div className="space-y-2">
               <Link
-                href="/login"
+                href={`/student/courses/${course.id}/lessons/${course.lessons?.[0]?.id || 101}`}
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white py-3 px-4 text-sm font-bold shadow-md shadow-indigo-600/20 transition-all hover:scale-[1.02]"
               >
-                Enroll in Course Free
+                Start Learning Now
+              </Link>
+              <Link
+                href={`/student/courses/${course.id}/quiz`}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 py-2.5 px-4 text-xs font-bold transition-all"
+              >
+                <Award className="h-4 w-4" />
+                Take Course Quiz
               </Link>
               <p className="text-center text-[11px] text-slate-500 dark:text-slate-400">
                 Instant access • Auto-graded quizzes included

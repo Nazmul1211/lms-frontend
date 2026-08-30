@@ -7,8 +7,9 @@ import { InstructorCourse, InstructorMetrics } from "@/types/instructor";
 import InstructorMetricsBanner from "@/components/instructor/InstructorMetricsBanner";
 import InstructorCourseCard from "@/components/instructor/InstructorCourseCard";
 import StudentRosterTable from "@/components/instructor/StudentRosterTable";
+import QuizCreatorModal from "@/components/instructor/QuizCreatorModal";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { Video, BookOpen, Users, Plus, Sparkles } from "lucide-react";
+import { Video, BookOpen, Users, Plus, Sparkles, Award } from "lucide-react";
 
 export default function InstructorDashboardPage() {
   const { user } = useAuth();
@@ -20,18 +21,20 @@ export default function InstructorDashboardPage() {
     activeThisWeek: 0,
   });
   const [selectedCourseId, setSelectedCourseId] = useState<number | undefined>(undefined);
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const data = await getInstructorCourses();
-        setCourses(data);
-        setMetrics(computeInstructorMetrics(data));
-      } finally {
-        setIsLoading(false);
-      }
+  const loadData = async () => {
+    try {
+      const data = await getInstructorCourses();
+      setCourses(data);
+      setMetrics(computeInstructorMetrics(data));
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
 
@@ -51,10 +54,26 @@ export default function InstructorDashboardPage() {
               Instructor Studio — {user?.name || "Alex Rivera"}
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Monitor student engagement, enrolled cohorts, and individual course progress.
+              Monitor student engagement, enrolled cohorts, and create custom quizzes.
             </p>
           </div>
+
+          <button
+            onClick={() => setIsQuizModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20 transition-all hover:scale-105 shrink-0"
+          >
+            <Award className="h-4 w-4" />
+            <span>+ Create Course Quiz</span>
+          </button>
         </div>
+
+        {/* Custom Quiz Creator Modal */}
+        <QuizCreatorModal
+          isOpen={isQuizModalOpen}
+          onClose={() => setIsQuizModalOpen(false)}
+          courses={courses}
+          onQuizCreated={loadData}
+        />
 
         {/* High-level Platform Metrics */}
         <InstructorMetricsBanner metrics={metrics} />
