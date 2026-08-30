@@ -100,11 +100,12 @@ export async function getQuizStudentView(
   courseId: number | string,
   token?: string
 ): Promise<Quiz | null> {
-  const numericCourseId = Number(courseId);
+  const strCourseId = String(courseId);
+  const numericCourseId = Number(courseId) || 1;
   const authToken = token || getAuthToken();
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/quizzes/${numericCourseId}/student-view`, {
+    const res = await fetch(`${API_BASE_URL}/api/quizzes/${strCourseId}/student-view`, {
       headers: {
         ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       },
@@ -113,7 +114,22 @@ export async function getQuizStudentView(
 
     if (res.ok) {
       const data = await res.json();
-      return data;
+      if (data && data.questions && data.questions.length > 0) {
+        return {
+          id: data.id || data.quizId || 1,
+          courseId: numericCourseId,
+          title: data.title || "Course Certification Quiz",
+          description: data.description || "Auto-graded assessment covering core concepts.",
+          passingScorePercentage: data.passingScorePercentage || data.passingScore || 70,
+          totalQuestions: data.questions.length,
+          timeLimitMinutes: data.timeLimitMinutes || 20,
+          questions: data.questions.map((q: any, i: number) => ({
+            id: q.id || i + 1,
+            question: q.question || q.questionText || `Question ${i + 1}`,
+            options: Array.isArray(q.options) ? q.options : [],
+          })),
+        };
+      }
     }
   } catch {
     // fallback
@@ -151,12 +167,12 @@ export async function submitQuiz(
   submission: QuizSubmission,
   token?: string
 ): Promise<QuizResult> {
-  const numericQuizId = Number(quizId);
-  const numericCourseId = Number(courseId);
+  const strQuizId = String(quizId);
+  const numericCourseId = Number(courseId) || 1;
   const authToken = token || getAuthToken();
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/quizzes/${numericQuizId}/submit`, {
+    const res = await fetch(`${API_BASE_URL}/api/quizzes/${strQuizId}/submit`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -167,7 +183,27 @@ export async function submitQuiz(
 
     if (res.ok) {
       const data = await res.json();
-      return data;
+      if (data) {
+        return {
+          quizId: data.quizId || strQuizId,
+          courseId: numericCourseId,
+          scorePercentage: data.scorePercentage || data.score || 0,
+          totalQuestions: data.totalQuestions || 0,
+          correctCount: data.correctCount || 0,
+          passed: Boolean(data.passed),
+          passingScorePercentage: data.passingScorePercentage || data.passingScore || 70,
+          submittedAt: data.submittedAt || new Date().toISOString(),
+          results: (data.results || data.breakdown || []).map((r: any, idx: number) => ({
+            questionId: r.questionId || idx + 1,
+            question: r.question || r.questionText || `Question ${idx + 1}`,
+            options: r.options || [],
+            selectedOption: r.selectedOption ?? r.selectedOptionIndex ?? -1,
+            correctOption: r.correctOption ?? r.correctAnswerIndex ?? 0,
+            isCorrect: Boolean(r.isCorrect),
+            explanation: r.explanation,
+          })),
+        };
+      }
     }
   } catch {
     // fallback
@@ -196,7 +232,7 @@ export async function submitQuiz(
   const passed = scorePercentage >= record.passingScorePercentage;
 
   const result: QuizResult = {
-    quizId: numericQuizId,
+    quizId: Number(quizId) || 1,
     courseId: numericCourseId,
     scorePercentage,
     totalQuestions,

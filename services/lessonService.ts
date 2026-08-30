@@ -143,7 +143,7 @@ Configure caching headers, optimize static assets, and audit lighthouse scores.
 /**
  * Helper to get local completed lessons list
  */
-function getLocalCompletedLessons(courseId: number): number[] {
+function getLocalCompletedLessons(courseId: number | string): (number | string)[] {
   if (typeof window === "undefined") return [101, 102, 103, 104];
   const stored = localStorage.getItem(`lms_progress_${courseId}`);
   if (stored) {
@@ -156,24 +156,25 @@ function getLocalCompletedLessons(courseId: number): number[] {
   return [101, 102, 103, 104];
 }
 
-function saveLocalCompletedLessons(courseId: number, lessonIds: number[]): void {
+function saveLocalCompletedLessons(courseId: number | string, lessonIds: (number | string)[]): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(`lms_progress_${courseId}`, JSON.stringify(lessonIds));
 }
 
 /**
- * Fetch course progress (completed lesson IDs & percentage)
+ * Fetch student course progress
  * Matches GET /api/courses/:id/progress
  */
 export async function getCourseProgress(
   courseId: number | string,
   token?: string
 ): Promise<CourseProgress> {
-  const numericCourseId = Number(courseId);
+  const strCourseId = String(courseId);
+  const numericCourseId = Number(courseId) || 1;
   const authToken = token || getAuthToken();
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/courses/${numericCourseId}/progress`, {
+    const res = await fetch(`${API_BASE_URL}/api/courses/${strCourseId}/progress`, {
       headers: {
         ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       },
@@ -181,15 +182,24 @@ export async function getCourseProgress(
     });
 
     if (res.ok) {
-      const data = await res.json();
-      return data;
+      const json = await res.json();
+      const raw = json.data || json;
+      if (raw) {
+        const completed = Array.isArray(raw.completedLessonIds) ? raw.completedLessonIds : [];
+        return {
+          courseId: numericCourseId,
+          completedLessonIds: completed,
+          progressPercentage: raw.progressPercentage ?? (completed.length > 0 ? 50 : 0),
+          totalLessons: raw.totalLessonsCount ?? raw.totalLessons ?? 4,
+        };
+      }
     }
   } catch {
     // fallback
   }
 
   const completed = getLocalCompletedLessons(numericCourseId);
-  const total = mockLessonsDatabase[numericCourseId]?.length || 6;
+  const total = mockLessonsDatabase[numericCourseId]?.length || 4;
   const progressPercentage = Math.round((completed.length / total) * 100);
 
   return {
@@ -209,11 +219,12 @@ export async function toggleLessonProgress(
   payload: ToggleProgressPayload,
   token?: string
 ): Promise<CourseProgress> {
-  const numericCourseId = Number(courseId);
+  const strCourseId = String(courseId);
+  const numericCourseId = Number(courseId) || 1;
   const authToken = token || getAuthToken();
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/courses/${numericCourseId}/progress`, {
+    const res = await fetch(`${API_BASE_URL}/api/courses/${strCourseId}/progress`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -223,8 +234,24 @@ export async function toggleLessonProgress(
     });
 
     if (res.ok) {
-      const data = await res.json();
-      return data;
+      const json = await res.json();
+      const raw = json.data || json;
+      if (raw) {
+        let completed = getLocalCompletedLessons(numericCourseId);
+        if (payload.isCompleted) {
+          if (!completed.includes(payload.lessonId)) completed.push(payload.lessonId);
+        } else {
+          completed = completed.filter((id) => id !== payload.lessonId);
+        }
+        saveLocalCompletedLessons(numericCourseId, completed);
+
+        return {
+          courseId: numericCourseId,
+          completedLessonIds: Array.isArray(raw.completedLessonIds) ? raw.completedLessonIds : completed,
+          progressPercentage: raw.progressPercentage ?? Math.round((completed.length / (raw.totalLessonsCount || 4)) * 100),
+          totalLessons: raw.totalLessonsCount ?? 4,
+        };
+      }
     }
   } catch {
     // fallback
@@ -240,7 +267,7 @@ export async function toggleLessonProgress(
   }
 
   saveLocalCompletedLessons(numericCourseId, completed);
-  const total = mockLessonsDatabase[numericCourseId]?.length || 6;
+  const total = mockLessonsDatabase[numericCourseId]?.length || 4;
   const progressPercentage = Math.round((completed.length / total) * 100);
 
   return {
@@ -255,11 +282,11 @@ export async function toggleLessonProgress(
  * Fetch all lessons of a course
  */
 export function getCourseLessons(courseId: number | string): Lesson[] {
-  const numericCourseId = Number(courseId);
+  const numericCourseId = Number(courseId) || 1;
   return (
     mockLessonsDatabase[numericCourseId] || [
       {
-        id: numericCourseId * 100 + 1,
+        id: 101,
         courseId: numericCourseId,
         title: "1. Foundational Architecture & Setup",
         duration: "20 mins",
@@ -269,7 +296,7 @@ export function getCourseLessons(courseId: number | string): Lesson[] {
         content: "### Foundation\n\nIn this lesson we cover the basics of this curriculum.",
       },
       {
-        id: numericCourseId * 100 + 2,
+        id: 102,
         courseId: numericCourseId,
         title: "2. Intermediate Core Concepts",
         duration: "25 mins",
@@ -277,6 +304,16 @@ export function getCourseLessons(courseId: number | string): Lesson[] {
         videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
         summary: "Deeper look into implementations.",
         content: "### Core Concepts\n\nExploring deep architectural patterns.",
+      },
+      {
+        id: 103,
+        courseId: numericCourseId,
+        title: "3. Advanced Best Practices & Production Deployment",
+        duration: "30 mins",
+        order: 3,
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        summary: "Production readiness and scaling.",
+        content: "### Production Deployment\n\nStep-by-step guidance for cloud deployment.",
       },
     ]
   );
@@ -289,8 +326,8 @@ export async function getLessonById(
   courseId: number | string,
   lessonId: number | string
 ): Promise<Lesson | null> {
-  const numericCourseId = Number(courseId);
-  const numericLessonId = Number(lessonId);
+  const numericCourseId = Number(courseId) || 1;
+  const numericLessonId = Number(lessonId) || 101;
 
   const lessons = getCourseLessons(numericCourseId);
   return lessons.find((l) => l.id === numericLessonId) || lessons[0] || null;

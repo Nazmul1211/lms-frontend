@@ -1,6 +1,6 @@
 export interface Lesson {
-  id: number;
-  courseId: number;
+  id: number | string;
+  courseId?: number | string;
   title: string;
   duration: string;
   order: number;
@@ -11,13 +11,13 @@ export interface Lesson {
 }
 
 export interface CourseProgress {
-  courseId: number;
-  completedLessonIds: number[];
+  courseId: number | string;
+  completedLessonIds: (number | string)[];
   progressPercentage: number;
   totalLessons: number;
 }
 
 export interface ToggleProgressPayload {
-  lessonId: number;
+  lessonId: number | string;
   isCompleted: boolean;
 }

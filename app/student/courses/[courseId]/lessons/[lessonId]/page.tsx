@@ -33,15 +33,17 @@ export default function LessonPlayerPage({
   params: Promise<{ courseId: string; lessonId: string }>;
 }) {
   const resolvedParams = use(params);
-  const courseId = Number(resolvedParams.courseId);
-  const lessonId = Number(resolvedParams.lessonId);
+  const courseIdStr = resolvedParams.courseId;
+  const lessonIdStr = resolvedParams.lessonId;
+  const courseId = Number(courseIdStr) || courseIdStr;
+  const lessonId = Number(lessonIdStr) || lessonIdStr;
   const router = useRouter();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [progress, setProgress] = useState<CourseProgress>({
-    courseId,
+    courseId: Number(courseId) || 1,
     completedLessonIds: [],
     progressPercentage: 0,
     totalLessons: 0,
@@ -51,16 +53,34 @@ export default function LessonPlayerPage({
   useEffect(() => {
     async function loadData() {
       try {
-        const [courseData, lessonData, progressData] = await Promise.all([
+        const [courseData, progressData] = await Promise.all([
           getCourseById(courseId),
-          getLessonById(courseId, lessonId),
           getCourseProgress(courseId),
         ]);
 
-        const allLessons = getCourseLessons(courseId);
+        const rawLessons = (courseData?.lessons && courseData.lessons.length > 0)
+          ? courseData.lessons
+          : getCourseLessons(courseId);
+
+        const allLessons: Lesson[] = rawLessons.map((l: any, idx: number) => ({
+          id: l.id || idx + 1,
+          courseId: courseId,
+          title: l.title || `Lesson ${idx + 1}`,
+          duration: l.duration || "15 mins",
+          order: l.order || idx + 1,
+          videoUrl: l.videoUrl || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+          summary: l.summary || "Core concepts and architectural overview.",
+          content: l.content || "### Lesson Overview\n\nWelcome to this curriculum topic.",
+          resources: l.resources || [],
+        }));
+
+        const foundLesson = allLessons.find(
+          (l) => String(l.id) === String(lessonId) || l.id === Number(lessonId)
+        ) || allLessons[0] || null;
+
         setCourse(courseData);
         setLessons(allLessons);
-        setCurrentLesson(lessonData);
+        setCurrentLesson(foundLesson);
         setProgress(progressData);
       } finally {
         setIsLoading(false);
@@ -69,7 +89,7 @@ export default function LessonPlayerPage({
     loadData();
   }, [courseId, lessonId]);
 
-  const handleToggleComplete = async (targetLessonId: number, isCompleted: boolean) => {
+  const handleToggleComplete = async (targetLessonId: number | string, isCompleted: boolean) => {
     // Optimistically update progress
     const updated = await toggleLessonProgress(courseId, {
       lessonId: targetLessonId,
@@ -107,10 +127,11 @@ export default function LessonPlayerPage({
   }
 
   // Find previous and next lessons
-  const currentIndex = lessons.findIndex((l) => l.id === currentLesson.id);
+  const currentIndex = lessons.findIndex((l) => String(l.id) === String(currentLesson.id));
   const prevLesson = currentIndex > 0 ? lessons[currentIndex - 1] : null;
   const nextLesson = currentIndex < lessons.length - 1 ? lessons[currentIndex + 1] : null;
-  const isLessonCompleted = progress.completedLessonIds.includes(currentLesson.id);
+  const completedIds = progress?.completedLessonIds || [];
+  const isLessonCompleted = Boolean(completedIds.includes(currentLesson.id));
 
   return (
     <div className="min-h-screen py-6 sm:py-10 bg-slate-50/50 dark:bg-[#080c14] transition-colors">

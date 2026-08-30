@@ -15,12 +15,12 @@ import {
 import { cn } from "@/lib/utils";
 
 interface LessonSidebarProps {
-  courseId: number;
+  courseId: number | string;
   courseTitle: string;
   lessons: Lesson[];
-  currentLessonId: number;
+  currentLessonId: number | string;
   progress: CourseProgress;
-  onToggleComplete: (lessonId: number, isCompleted: boolean) => void;
+  onToggleComplete: (lessonId: number | string, isCompleted: boolean) => void;
 }
 
 export default function LessonSidebar({
@@ -64,7 +64,7 @@ export default function LessonSidebar({
           />
         </div>
         <p className="text-[11px] text-slate-400 dark:text-slate-500 text-right">
-          {progress.completedLessonIds.length} of {lessons.length} completed
+          {(progress?.completedLessonIds || []).length} of {lessons.length} completed
         </p>
       </div>
 
@@ -75,8 +75,8 @@ export default function LessonSidebar({
         </p>
 
         {lessons.map((lesson, idx) => {
-          const isCurrent = lesson.id === currentLessonId;
-          const isCompleted = progress.completedLessonIds.includes(lesson.id);
+          const isCurrent = String(lesson.id) === String(currentLessonId);
+          const isCompleted = Boolean(progress?.completedLessonIds?.includes(lesson.id));
 
           return (
             <div

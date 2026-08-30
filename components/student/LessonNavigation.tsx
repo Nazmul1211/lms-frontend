@@ -6,7 +6,7 @@ import { Lesson } from "@/types/lesson";
 import { ArrowLeft, ArrowRight, CheckCircle2, Circle, Award } from "lucide-react";
 
 interface LessonNavigationProps {
-  courseId: number;
+  courseId: number | string;
   prevLesson: Lesson | null;
   nextLesson: Lesson | null;
   isCompleted: boolean;
