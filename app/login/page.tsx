@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { demoAccounts } from "@/services/authService";
+import { demoAccounts, getRoleType } from "@/services/authService";
 import { Lock, Mail, ArrowRight, Eye, EyeOff, Shield, Sparkles, AlertCircle } from "lucide-react";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 
@@ -18,6 +18,19 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const redirectByRole = (user: any) => {
+    const roleType = getRoleType(user);
+    if (roleType === "admin") {
+      router.push("/admin/dashboard");
+    } else if (roleType === "content_manager") {
+      router.push("/manager/blogs");
+    } else if (roleType === "instructor") {
+      router.push("/instructor/dashboard");
+    } else {
+      router.push("/student/dashboard");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier || !password) {
@@ -30,7 +43,7 @@ export default function LoginPage() {
 
     try {
       const res = await login({ identifier, password });
-      redirectByRole(res.user.role);
+      redirectByRole(res.user);
     } catch (err: any) {
       setError(err?.message || "Failed to sign in. Please check your credentials.");
     } finally {
@@ -43,7 +56,7 @@ export default function LoginPage() {
     setError(null);
     try {
       const res = await loginWithSocial(provider);
-      redirectByRole(res.user.role);
+      redirectByRole(res.user);
     } catch {
       setError(`Failed to sign in with ${provider}.`);
     } finally {
@@ -56,19 +69,6 @@ export default function LoginPage() {
     const acc = demoAccounts[roleKey];
     setIdentifier(acc.identifier);
     setPassword(acc.password);
-  };
-
-  const redirectByRole = (role: any) => {
-    const roleType = typeof role === "string" ? role : role?.type || role?.name?.toLowerCase() || "student";
-    if (roleType.includes("admin")) {
-      router.push("/admin/dashboard");
-    } else if (roleType.includes("manager") || roleType.includes("content")) {
-      router.push("/manager/blogs");
-    } else if (roleType.includes("instructor")) {
-      router.push("/instructor/dashboard");
-    } else {
-      router.push("/student/dashboard");
-    }
   };
 
   return (

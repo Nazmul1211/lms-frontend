@@ -2,6 +2,24 @@ import { AuthResponse, LoginCredentials, RegisterPayload, User, RoleType } from 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:1337";
 
+// Helper to normalize and resolve role string cleanly
+export const getRoleType = (user: User | null): RoleType => {
+  if (!user || !user.role) return "student";
+  if (typeof user.role === "string") {
+    const r = user.role.toLowerCase();
+    if (r.includes("admin")) return "admin";
+    if (r.includes("manager") || r.includes("content")) return "content_manager";
+    if (r.includes("instructor") || r.includes("alex") || r.includes("teacher")) return "instructor";
+    return "student";
+  }
+  const type = (user.role.type || "").toLowerCase();
+  const name = (user.role.name || "").toLowerCase();
+  if (type.includes("admin") || name.includes("admin")) return "admin";
+  if (type.includes("manager") || type.includes("content") || name.includes("manager") || name.includes("content")) return "content_manager";
+  if (type.includes("instructor") || name.includes("instructor")) return "instructor";
+  return "student";
+};
+
 // Helper to access token in browser
 export const getAuthToken = (): string | null => {
   if (typeof window === "undefined") return null;
@@ -19,6 +37,7 @@ export const removeAuthToken = (): void => {
   localStorage.removeItem("lms_auth_token");
   localStorage.removeItem("lms_user");
   document.cookie = "lms_token=; path=/; max-age=0; SameSite=Lax";
+  document.cookie = "lms_role=; path=/; max-age=0; SameSite=Lax";
 };
 
 export const getStoredUser = (): User | null => {
@@ -35,7 +54,33 @@ export const getStoredUser = (): User | null => {
 export const setStoredUser = (user: User): void => {
   if (typeof window === "undefined") return;
   localStorage.setItem("lms_user", JSON.stringify(user));
+  const roleType = getRoleType(user);
+  document.cookie = `lms_role=${roleType}; path=/; max-age=604800; SameSite=Lax`;
 };
+
+/**
+ * Fetch current user from /api/users/me
+ */
+export async function getCurrentUserApi(token?: string): Promise<User | null> {
+  const authToken = token || getAuthToken();
+  if (!authToken) return null;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/users/me`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) return null;
+    const user: User = await res.json();
+    setStoredUser(user);
+    return user;
+  } catch {
+    return null;
+  }
+}
 
 // Preset demo accounts matching seeded backend users
 export const demoAccounts = {

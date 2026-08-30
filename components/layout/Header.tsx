@@ -25,18 +25,53 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  const navLinks = [
-    { name: "Courses", href: "/courses" },
-    { name: "Learning Paths", href: "/courses" },
-    { name: "Engineering Blog", href: "/blogs" },
-  ];
+  // Dynamic Navigation links based on role
+  const getNavLinks = () => {
+    if (!isAuthenticated || !user) {
+      return [
+        { name: "Explore Courses", href: "/courses" },
+        { name: "Engineering Blog", href: "/blogs" },
+      ];
+    }
+
+    switch (role) {
+      case "admin":
+        return [
+          { name: "Admin Dashboard", href: "/admin/dashboard" },
+          { name: "Courses", href: "/courses" },
+          { name: "Blog Posts", href: "/blogs" },
+        ];
+      case "content_manager":
+        return [
+          { name: "Content Studio", href: "/manager/blogs" },
+          { name: "Courses", href: "/courses" },
+          { name: "Public Blogs", href: "/blogs" },
+        ];
+      case "instructor":
+        return [
+          { name: "Teaching Studio", href: "/instructor/dashboard" },
+          { name: "Courses Catalog", href: "/courses" },
+          { name: "Engineering Blog", href: "/blogs" },
+        ];
+      case "student":
+      default:
+        return [
+          { name: "My Learning", href: "/student/dashboard" },
+          { name: "My Courses", href: "/student/my-courses" },
+          { name: "Explore Courses", href: "/courses" },
+          { name: "Blog", href: "/blogs" },
+        ];
+    }
+  };
+
+  const navLinks = getNavLinks();
 
   // Helper to determine role badge and dashboard route
   const getRoleBadge = () => {
     switch (role) {
       case "admin":
         return {
-          label: "Admin",
+          label: "Super Admin",
           href: "/admin/dashboard",
           style: "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800",
         };

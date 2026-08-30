@@ -9,6 +9,8 @@ import {
   registerApi,
   socialLoginApi,
   removeAuthToken,
+  getCurrentUserApi,
+  getRoleType,
 } from "@/services/authService";
 
 interface AuthContextType {
@@ -30,35 +32,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Rehydrate auth state on mount
+  // Rehydrate auth state on mount and sync fresh profile
   useEffect(() => {
-    try {
-      const storedToken = getAuthToken();
-      const storedUser = getStoredUser();
+    async function rehydrate() {
+      try {
+        const storedToken = getAuthToken();
+        const storedUser = getStoredUser();
 
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(storedUser);
+        if (storedToken) {
+          setToken(storedToken);
+          if (storedUser) {
+            setUser(storedUser);
+          }
+          // Fetch latest profile from DB to guarantee role sync
+          const freshUser = await getCurrentUserApi(storedToken);
+          if (freshUser) {
+            setUser(freshUser);
+          }
+        }
+      } catch {
+        // Ignore
+      } finally {
+        setIsLoading(false);
       }
-    } catch {
-      // Ignore SSR storage errors
-    } finally {
-      setIsLoading(false);
     }
+    rehydrate();
   }, []);
 
   const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
     const data = await loginApi(credentials);
     setToken(data.jwt);
-    setUser(data.user);
-    return data;
+    let loggedUser = data.user;
+    if (!loggedUser?.role) {
+      const fresh = await getCurrentUserApi(data.jwt);
+      if (fresh) loggedUser = fresh;
+    }
+    setUser(loggedUser);
+    return { ...data, user: loggedUser };
   };
 
   const register = async (payload: RegisterPayload): Promise<AuthResponse> => {
     const data = await registerApi(payload);
     setToken(data.jwt);
-    setUser(data.user);
-    return data;
+    let registeredUser = data.user;
+    if (!registeredUser?.role) {
+      const fresh = await getCurrentUserApi(data.jwt);
+      if (fresh) registeredUser = fresh;
+    }
+    setUser(registeredUser);
+    return { ...data, user: registeredUser };
   };
 
   const loginWithSocial = async (provider: "google" | "github"): Promise<AuthResponse> => {
@@ -76,14 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Helper to resolve role type cleanly
   const getRole = (): RoleType => {
-    if (!user || !user.role) return "student";
-    if (typeof user.role === "string") return user.role.toLowerCase() as RoleType;
-    if (user.role.type) return user.role.type;
-    const name = user.role.name?.toLowerCase() || "";
-    if (name.includes("admin")) return "admin";
-    if (name.includes("manager") || name.includes("content")) return "content_manager";
-    if (name.includes("instructor")) return "instructor";
-    return "student";
+    return getRoleType(user);
   };
 
   return (
