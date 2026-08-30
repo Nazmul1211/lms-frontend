@@ -130,13 +130,52 @@ This draft article explores upcoming collaborative learning features including s
 ];
 
 /**
+ * Helper to normalize Strapi blog post data
+ */
+function normalizeBlogPost(raw: any): BlogPost {
+  const defaultAuthor = {
+    id: 101,
+    name: "Elena Rostova",
+    username: "elena_content",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
+    role: "Lead Content Architect",
+  };
+
+  const rawAuthor = raw.author;
+  const author = rawAuthor
+    ? {
+        id: rawAuthor.id || 101,
+        name: rawAuthor.name || rawAuthor.username || "Elena Content",
+        username: rawAuthor.username || "content_manager",
+        avatar: rawAuthor.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
+        role: rawAuthor.role?.name || "Content Manager",
+      }
+    : defaultAuthor;
+
+  return {
+    id: raw.documentId || raw.id,
+    title: raw.title || "Engineering Article",
+    slug: raw.slug || "article",
+    excerpt: raw.excerpt || "Architectural insights and deep dives for modern software engineers.",
+    content: raw.content || raw.excerpt || "Full article content coming soon.",
+    coverImage: raw.coverImageUrl || raw.coverImage || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=60",
+    category: raw.category || "Engineering",
+    status: raw.isPublished !== false ? "published" : "draft",
+    author,
+    readTime: raw.readTime || "5 min read",
+    publishedAt: raw.blogPostPublishedAt || raw.publishedAt || raw.createdAt,
+    createdAt: raw.createdAt,
+  };
+}
+
+/**
  * Fetch blog posts
  * Matches GET /api/blog-posts
  * When includeDrafts is false, returns only published blogs for public/students
  */
 export async function getBlogPosts(includeDrafts = false): Promise<BlogPost[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/blog-posts${includeDrafts ? "?all=true" : ""}`, {
+    const res = await fetch(`${API_BASE_URL}/api/blog-posts?populate=*`, {
       cache: "no-store",
     });
 
@@ -145,10 +184,16 @@ export async function getBlogPosts(includeDrafts = false): Promise<BlogPost[]> {
       return initialMockBlogs.filter((b) => b.status === "published");
     }
 
-    const data = await res.json();
-    const list: BlogPost[] = Array.isArray(data) ? data : data.data || initialMockBlogs;
-    if (includeDrafts) return list;
-    return list.filter((b) => b.status === "published");
+    const json = await res.json();
+    const rawList: any[] = Array.isArray(json) ? json : json.data || [];
+    if (rawList.length > 0) {
+      const normalized = rawList.map(normalizeBlogPost);
+      if (includeDrafts) return normalized;
+      return normalized.filter((b) => b.status === "published");
+    }
+
+    if (includeDrafts) return initialMockBlogs;
+    return initialMockBlogs.filter((b) => b.status === "published");
   } catch {
     if (includeDrafts) return initialMockBlogs;
     return initialMockBlogs.filter((b) => b.status === "published");
@@ -156,23 +201,45 @@ export async function getBlogPosts(includeDrafts = false): Promise<BlogPost[]> {
 }
 
 /**
- * Fetch single blog post by ID
+ * Fetch single blog post by ID or slug
  * Matches GET /api/blog-posts/:id
  */
 export async function getBlogPostById(id: number | string): Promise<BlogPost | null> {
-  const numericId = Number(id);
+  const strId = String(id);
+
   try {
-    const res = await fetch(`${API_BASE_URL}/api/blog-posts/${numericId}`, {
+    const res = await fetch(`${API_BASE_URL}/api/blog-posts/${strId}?populate=*`, {
       cache: "no-store",
     });
 
-    if (!res.ok) {
-      return initialMockBlogs.find((b) => b.id === numericId) || null;
+    if (res.ok) {
+      const json = await res.json();
+      const raw = json.data || json;
+      if (raw && (raw.id || raw.documentId || raw.title)) {
+        return normalizeBlogPost(raw);
+      }
     }
 
-    const data = await res.json();
-    return data?.data || data || initialMockBlogs.find((b) => b.id === numericId) || null;
+    // Try slug filter
+    const slugRes = await fetch(
+      `${API_BASE_URL}/api/blog-posts?filters[slug][$eq]=${encodeURIComponent(strId)}&populate=*`,
+      { cache: "no-store" }
+    );
+
+    if (slugRes.ok) {
+      const slugJson = await slugRes.json();
+      const rawList: any[] = Array.isArray(slugJson) ? slugJson : slugJson.data || [];
+      if (rawList.length > 0) {
+        return normalizeBlogPost(rawList[0]);
+      }
+    }
   } catch {
-    return initialMockBlogs.find((b) => b.id === numericId) || null;
+    // fallback
   }
+
+  return (
+    initialMockBlogs.find(
+      (b) => String(b.id) === strId || b.slug === strId || (Number(id) && b.id === Number(id))
+    ) || null
+  );
 }

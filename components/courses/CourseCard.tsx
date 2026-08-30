@@ -59,7 +59,7 @@ export default function CourseCard({ course }: { course: Course }) {
         </div>
 
         {/* Footer: Instructor & CTA Button */}
-        <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-3.5">
+        <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-3.5 mt-auto">
           <div className="flex items-center gap-2">
             <div className="h-7 w-7 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0">
               {course.instructor?.avatar ? (
@@ -74,16 +74,16 @@ export default function CourseCard({ course }: { course: Course }) {
                 </div>
               )}
             </div>
-            <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[100px]">
+            <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[110px]">
               {course.instructor?.name}
             </span>
           </div>
 
           <Link
             href={`/courses/${course.id}`}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition-all border border-indigo-200/60 dark:border-indigo-900/60 shadow-sm hover:scale-[1.02] active:scale-95"
           >
-            Explore Syllabus
+            <span>Explore</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>

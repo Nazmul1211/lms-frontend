@@ -89,9 +89,9 @@ export default function EnrolledCourseCard({ course }: { course: EnrolledCourse 
         )}
 
         {/* Action Button */}
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 mt-auto flex items-center justify-between">
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 mt-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0">
+            <div className="h-7 w-7 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0">
               {course.instructor?.avatar ? (
                 <img
                   src={course.instructor.avatar}
@@ -104,20 +104,20 @@ export default function EnrolledCourseCard({ course }: { course: EnrolledCourse 
                 </div>
               )}
             </div>
-            <span className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[100px]">
+            <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[110px]">
               {course.instructor?.name}
             </span>
           </div>
 
           <Link
             href={`/student/courses/${course.courseId}/lessons/${targetLessonId}`}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-95 ${
               isCompleted
-                ? "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
-                : "bg-indigo-600 hover:bg-indigo-500 text-white"
+                ? "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
+                : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20"
             }`}
           >
-            {isCompleted ? "Review Lessons" : "Continue"}
+            <span>{isCompleted ? "Review Lessons" : "Continue"}</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>

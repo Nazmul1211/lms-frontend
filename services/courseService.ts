@@ -162,12 +162,78 @@ export const initialMockCourses: Course[] = [
 ];
 
 /**
+ * Helper to normalize Strapi course data to Course type
+ */
+function normalizeCourse(raw: any): Course {
+  const defaultInstructor = {
+    id: 101,
+    name: "Alex Rivera",
+    username: "instructor_alex",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80",
+    bio: "Senior Full-Stack Architect with 10+ years of experience in modern React ecosystems and scalable cloud architectures.",
+    role: "Lead Instructor",
+  };
+
+  const rawInstructor = raw.instructor;
+  const instructor = rawInstructor
+    ? {
+        id: rawInstructor.id || 101,
+        name: rawInstructor.name || rawInstructor.username || "Alex Rivera",
+        username: rawInstructor.username || "instructor_alex",
+        avatar: rawInstructor.avatar || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80",
+        bio: rawInstructor.bio || "Senior Full-Stack Instructor & Software Architect.",
+        role: rawInstructor.role?.name || "Lead Instructor",
+      }
+    : defaultInstructor;
+
+  const rawLessons = raw.lessons || [];
+  const lessons = rawLessons.map((l: any, idx: number) => ({
+    id: l.documentId || l.id || idx + 1,
+    title: l.title || `Lesson ${idx + 1}`,
+    duration: l.durationMinutes ? `${l.durationMinutes} mins` : l.duration || "15 mins",
+    order: l.order || idx + 1,
+    isPreview: l.order === 1,
+    content: l.content,
+    videoUrl: l.videoUrl,
+  }));
+
+  return {
+    id: raw.documentId || raw.id,
+    title: raw.title || "Untitled Course",
+    slug: raw.slug || "course",
+    description: raw.description || "Master industry-standard web engineering practices with interactive modules.",
+    coverImage: raw.coverImageUrl || raw.coverImage || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=60",
+    category: raw.category || "Web Development",
+    level: raw.level ? (raw.level.charAt(0).toUpperCase() + raw.level.slice(1)) : "Intermediate",
+    duration: raw.duration || `${lessons.length * 15 || 45} mins`,
+    totalLessons: lessons.length || 4,
+    enrolledStudentsCount: raw.enrollments?.length ?? raw.enrolledStudentsCount ?? 120,
+    instructor,
+    whatYouWillLearn: raw.whatYouWillLearn || [
+      "Architect full-stack applications with production-grade reliability",
+      "Implement role-based access control and security safeguards",
+      "Deploy scalable systems to cloud platforms like Vercel and Railway",
+    ],
+    prerequisites: raw.prerequisites || [
+      "Basic understanding of JavaScript / TypeScript and modern web concepts",
+    ],
+    lessons: lessons.length > 0 ? lessons : [
+      { id: 101, title: "1. Architecture & Mental Model Overview", duration: "15 mins", order: 1, isPreview: true },
+      { id: 102, title: "2. Core Implementation & Deep Dive", duration: "25 mins", order: 2, isPreview: false },
+      { id: 103, title: "3. Best Practices & Production Deployment", duration: "20 mins", order: 3, isPreview: false },
+    ],
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
+  };
+}
+
+/**
  * Fetch all available published courses
  * Matches GET /api/courses
  */
 export async function getCourses(): Promise<Course[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/courses`, {
+    const res = await fetch(`${API_BASE_URL}/api/courses?populate=*`, {
       cache: "no-store",
     });
 
@@ -175,33 +241,59 @@ export async function getCourses(): Promise<Course[]> {
       return initialMockCourses;
     }
 
-    const data = await res.json();
-    return Array.isArray(data) ? data : data.data || initialMockCourses;
+    const json = await res.json();
+    const rawList: any[] = Array.isArray(json) ? json : json.data || [];
+    if (rawList.length > 0) {
+      return rawList.map(normalizeCourse);
+    }
+    return initialMockCourses;
   } catch {
     return initialMockCourses;
   }
 }
 
 /**
- * Fetch single course by ID
- * Matches GET /api/courses/:id
+ * Fetch single course by ID or slug
+ * Matches GET /api/courses/:id or /api/courses?filters[slug][$eq]=...
  */
 export async function getCourseById(id: number | string): Promise<Course | null> {
-  const numericId = Number(id);
+  const strId = String(id);
+
   try {
-    const res = await fetch(`${API_BASE_URL}/api/courses/${numericId}`, {
+    // 1. Try direct ID / documentId lookup
+    const res = await fetch(`${API_BASE_URL}/api/courses/${strId}?populate=*`, {
       cache: "no-store",
     });
 
-    if (!res.ok) {
-      const found = initialMockCourses.find((c) => c.id === numericId);
-      return found || null;
+    if (res.ok) {
+      const json = await res.json();
+      const raw = json.data || json;
+      if (raw && (raw.id || raw.documentId || raw.title)) {
+        return normalizeCourse(raw);
+      }
     }
 
-    const data = await res.json();
-    return data?.data || data || null;
+    // 2. Try slug filter lookup
+    const slugRes = await fetch(
+      `${API_BASE_URL}/api/courses?filters[slug][$eq]=${encodeURIComponent(strId)}&populate=*`,
+      { cache: "no-store" }
+    );
+
+    if (slugRes.ok) {
+      const slugJson = await slugRes.json();
+      const rawList: any[] = Array.isArray(slugJson) ? slugJson : slugJson.data || [];
+      if (rawList.length > 0) {
+        return normalizeCourse(rawList[0]);
+      }
+    }
   } catch {
-    const found = initialMockCourses.find((c) => c.id === numericId);
-    return found || null;
+    // Fallback to local
   }
+
+  // 3. Fallback search against initialMockCourses
+  const found = initialMockCourses.find(
+    (c) => String(c.id) === strId || c.slug === strId || (Number(id) && c.id === Number(id))
+  );
+
+  return found || null;
 }
