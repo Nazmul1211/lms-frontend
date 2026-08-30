@@ -2,8 +2,7 @@ import { BlogPost } from "@/types/blog";
 import { CreateBlogPostPayload, ManagerMetrics } from "@/types/manager";
 import { initialMockBlogs } from "@/services/blogService";
 import { getAuthToken, getStoredUser } from "@/services/authService";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:1337";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
 function getLocalBlogs(): BlogPost[] {
   if (typeof window === "undefined") return initialMockBlogs;

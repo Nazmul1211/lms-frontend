@@ -1,7 +1,6 @@
 import { AdminStats, AdminUser, AvailableRole } from "@/types/admin";
 import { getAuthToken } from "@/services/authService";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:1337";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
 export const availableRoles: AvailableRole[] = [
   { id: 1, name: "Admin", type: "admin", description: "Full platform oversight, role management, and system analytics." },
@@ -135,18 +134,35 @@ export async function getAdminStats(token?: string): Promise<AdminStats> {
     });
 
     if (res.ok) {
-      const data = await res.json();
-      return data?.data || data;
+      const json = await res.json();
+      const raw = json?.data || json;
+      const usersByRole = raw.usersByRole || {};
+
+      const roleBreakdown = raw.roleBreakdown || {
+        students: usersByRole["Student"] ?? usersByRole["student"] ?? 0,
+        instructors: usersByRole["Instructor"] ?? usersByRole["instructor"] ?? 0,
+        contentManagers: usersByRole["Content Manager"] ?? usersByRole["content_manager"] ?? 0,
+        admins: usersByRole["Admin"] ?? usersByRole["admin"] ?? 0,
+      };
+
+      return {
+        totalUsers: raw.totalUsers ?? 0,
+        totalEnrollments: raw.totalEnrollments ?? 0,
+        totalCourses: raw.totalCourses ?? 0,
+        totalQuizzesPassed: raw.totalSubmissions ?? raw.totalQuizzesPassed ?? 0,
+        activeToday: raw.activeToday ?? raw.totalUsers ?? 1,
+        roleBreakdown,
+      };
     }
   } catch {
     // fallback
   }
 
   const users = getLocalUsers();
-  const students = users.filter((u) => u.role.type === "student").length;
-  const instructors = users.filter((u) => u.role.type === "instructor").length;
-  const contentManagers = users.filter((u) => u.role.type === "content_manager").length;
-  const admins = users.filter((u) => u.role.type === "admin").length;
+  const students = users.filter((u) => u.role?.type === "student").length;
+  const instructors = users.filter((u) => u.role?.type === "instructor").length;
+  const contentManagers = users.filter((u) => u.role?.type === "content_manager").length;
+  const admins = users.filter((u) => u.role?.type === "admin").length;
 
   return {
     totalUsers: users.length,
@@ -180,9 +196,35 @@ export async function getAdminUsers(token?: string): Promise<{ users: AdminUser[
 
     if (res.ok) {
       const data = await res.json();
+      const rawUsers = data.users || data.data?.users || getLocalUsers();
+      const rawRoles = data.roles || data.data?.availableRoles || data.data?.roles || availableRoles;
+
+      // Normalize users
+      const normalizedUsers: AdminUser[] = (rawUsers || []).map((u: any, idx: number) => {
+        let userRole: AvailableRole = availableRoles[3]; // default Student
+        if (u.role) {
+          const rName = u.role.name || u.role;
+          const found = availableRoles.find((r) => r.name === rName || r.type === u.role.type);
+          if (found) userRole = found;
+          else userRole = { id: u.role.id || 4, name: rName, type: (u.role.type || rName.toLowerCase()) as any };
+        }
+
+        return {
+          id: u.id || idx + 1,
+          name: u.name || u.username,
+          username: u.username,
+          email: u.email,
+          avatar: u.avatar || `https://images.unsplash.com/photo-${1500000000000 + (u.id || idx) * 1000}?w=120&auto=format&fit=crop&q=80`,
+          role: userRole,
+          enrolledCoursesCount: u.enrolledCoursesCount ?? 0,
+          joinedAt: u.createdAt ? new Date(u.createdAt).toISOString().split("T")[0] : "2026-08-01",
+          status: u.blocked ? "suspended" : "active",
+        };
+      });
+
       return {
-        users: data.users || data.data?.users || getLocalUsers(),
-        roles: data.roles || data.data?.roles || availableRoles,
+        users: normalizedUsers,
+        roles: rawRoles,
       };
     }
   } catch {

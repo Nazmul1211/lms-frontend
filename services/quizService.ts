@@ -1,7 +1,6 @@
 import { Quiz, QuizQuestion, QuizSubmission, QuizResult, QuestionResult } from "@/types/quiz";
 import { getAuthToken } from "@/services/authService";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:1337";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
 // Master quiz records with server-side answer keys (simulating database records)
 interface ServerQuizRecord {

@@ -1,6 +1,5 @@
 import { Course } from "@/types/course";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:1337";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
 // Fallback sample courses for development and testing
 export const initialMockCourses: Course[] = [

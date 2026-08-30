@@ -99,19 +99,19 @@ export default function AdminStatsGrid({ stats }: { stats: AdminStats }) {
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-semibold">
               <span className="h-2 w-2 rounded-full bg-blue-500" />
-              {stats.roleBreakdown.students} Students
+              {stats?.roleBreakdown?.students ?? 0} Students
             </span>
             <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              {stats.roleBreakdown.instructors} Instructors
+              {stats?.roleBreakdown?.instructors ?? 0} Instructors
             </span>
             <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold">
               <span className="h-2 w-2 rounded-full bg-amber-500" />
-              {stats.roleBreakdown.contentManagers} Content Managers
+              {stats?.roleBreakdown?.contentManagers ?? 0} Content Managers
             </span>
             <span className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-semibold">
               <span className="h-2 w-2 rounded-full bg-purple-500" />
-              {stats.roleBreakdown.admins} Admins
+              {stats?.roleBreakdown?.admins ?? 0} Admins
             </span>
           </div>
         </div>

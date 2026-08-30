@@ -1,6 +1,5 @@
 import { BlogPost } from "@/types/blog";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:1337";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
 // Sample mock blog articles for development and fallback
 export const initialMockBlogs: BlogPost[] = [

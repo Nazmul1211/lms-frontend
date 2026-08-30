@@ -1,7 +1,6 @@
 import { InstructorCourse, InstructorMetrics, EnrolledStudent } from "@/types/instructor";
 import { getAuthToken } from "@/services/authService";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:1337";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
 // Sample mock courses with enrolled student rosters for offline testing
 export const initialMockInstructorCourses: InstructorCourse[] = [

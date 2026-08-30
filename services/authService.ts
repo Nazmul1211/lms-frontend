@@ -1,6 +1,5 @@
 import { AuthResponse, LoginCredentials, RegisterPayload, User, RoleType } from "@/types/auth";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:1337";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
 // Helper to normalize and resolve role string cleanly
 export const getRoleType = (user: User | null): RoleType => {
