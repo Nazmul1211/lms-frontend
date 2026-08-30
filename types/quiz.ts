@@ -6,13 +6,20 @@ export interface QuizQuestion {
 }
 
 export interface Quiz {
-  id: number;
-  courseId: number;
+  id: number | string;
+  courseId: number | string;
+  courseTitle?: string;
   title: string;
   description: string;
   passingScorePercentage: number;
   totalQuestions: number;
   timeLimitMinutes?: number;
+  timeframeHours?: number;
+  deadline?: string;
+  createdAt?: string;
+  isClosed?: boolean;
+  score?: number;
+  passed?: boolean;
   questions: QuizQuestion[];
 }
 

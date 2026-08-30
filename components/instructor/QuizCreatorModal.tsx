@@ -31,6 +31,8 @@ export default function QuizCreatorModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [passingScore, setPassingScore] = useState(70);
+  const [timeLimitMinutes, setTimeLimitMinutes] = useState(20);
+  const [timeframeHours, setTimeframeHours] = useState(48);
   const [questions, setQuestions] = useState<QuestionDraft[]>([
     {
       questionText: "",
@@ -128,6 +130,8 @@ export default function QuizCreatorModal({
         title,
         description,
         passingScore: Number(passingScore) || 70,
+        timeLimitMinutes: Number(timeLimitMinutes) || 20,
+        timeframeHours: Number(timeframeHours) || 48,
         course: selectedCourseId,
         questions: questions.map((q) => ({
           questionText: q.questionText,
@@ -168,7 +172,7 @@ export default function QuizCreatorModal({
                 Create Custom Course Quiz
               </h2>
               <p className="text-xs text-slate-500">
-                Draft interactive MCQ assessments with auto-grading rules.
+                Draft interactive MCQ assessments with auto-grading rules & timeframes.
               </p>
             </div>
           </div>
@@ -243,9 +247,10 @@ export default function QuizCreatorModal({
               />
             </div>
 
+            {/* Passing Score */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Passing Score Percentage (%)
+                Passing Score (%)
               </label>
               <input
                 type="number"
@@ -253,8 +258,45 @@ export default function QuizCreatorModal({
                 max={100}
                 value={passingScore}
                 onChange={(e) => setPassingScore(Number(e.target.value))}
-                className="w-full py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-indigo-500"
+                className="w-full py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-indigo-500"
               />
+            </div>
+
+            {/* Time Limit per Attempt */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Timer Limit per Attempt
+              </label>
+              <select
+                value={timeLimitMinutes}
+                onChange={(e) => setTimeLimitMinutes(Number(e.target.value))}
+                className="w-full py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value={10}>10 Minutes</option>
+                <option value={15}>15 Minutes</option>
+                <option value={20}>20 Minutes</option>
+                <option value={30}>30 Minutes</option>
+                <option value={45}>45 Minutes</option>
+                <option value={60}>60 Minutes</option>
+              </select>
+            </div>
+
+            {/* Timeframe / Deadline */}
+            <div className="space-y-1.5 sm:col-span-2">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Assessment Active Timeframe (Closes for students after this period)
+              </label>
+              <select
+                value={timeframeHours}
+                onChange={(e) => setTimeframeHours(Number(e.target.value))}
+                className="w-full py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value={24}>24 Hours from Creation (1 Day)</option>
+                <option value={48}>48 Hours from Creation (2 Days)</option>
+                <option value={72}>72 Hours from Creation (3 Days)</option>
+                <option value={168}>7 Days (1 Week)</option>
+                <option value={720}>30 Days (1 Month)</option>
+              </select>
             </div>
           </div>
 

@@ -7,6 +7,7 @@ import { getMyCourses, computeStudentStats } from "@/services/studentService";
 import { EnrolledCourse, StudentStats } from "@/types/student";
 import StudentStatsBanner from "@/components/student/StudentStatsBanner";
 import EnrolledCourseCard from "@/components/student/EnrolledCourseCard";
+import StudentQuizzesList from "@/components/student/StudentQuizzesList";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { BookOpen, PlayCircle, ArrowRight, Sparkles, Plus, GraduationCap } from "lucide-react";
 
@@ -109,6 +110,11 @@ export default function StudentDashboardPage() {
             </div>
           </div>
         )}
+
+        {/* Course Quizzes & Live Assessments Section */}
+        <StudentQuizzesList
+          enrolledCourseIds={courses.map((c) => c.courseId || c.id)}
+        />
 
         {/* Enrolled Courses Grid */}
         <div className="space-y-6">
