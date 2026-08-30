@@ -20,15 +20,15 @@ export default function LoginPage() {
 
   const redirectByRole = (user: any) => {
     const roleType = getRoleType(user);
+    let target = "/student/dashboard";
     if (roleType === "admin") {
-      router.push("/admin/dashboard");
+      target = "/admin/dashboard";
     } else if (roleType === "content_manager") {
-      router.push("/manager/blogs");
+      target = "/manager/blogs";
     } else if (roleType === "instructor") {
-      router.push("/instructor/dashboard");
-    } else {
-      router.push("/student/dashboard");
+      target = "/instructor/dashboard";
     }
+    window.location.href = target;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

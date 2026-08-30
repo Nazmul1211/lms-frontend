@@ -26,15 +26,24 @@ export function middleware(request: NextRequest) {
   }
 
   // Enforce role-based boundaries
-  if (token) {
+  if (token && request.cookies.has("lms_role")) {
+    const fallback =
+      role === "admin"
+        ? "/admin/dashboard"
+        : role === "instructor"
+        ? "/instructor/dashboard"
+        : role === "content_manager"
+        ? "/manager/blogs"
+        : "/student/dashboard";
+
     if (pathname.startsWith("/admin") && role !== "admin") {
-      return NextResponse.redirect(new URL("/student/dashboard", request.url));
+      return NextResponse.redirect(new URL(fallback, request.url));
     }
     if (pathname.startsWith("/manager") && role !== "content_manager" && role !== "admin") {
-      return NextResponse.redirect(new URL("/student/dashboard", request.url));
+      return NextResponse.redirect(new URL(fallback, request.url));
     }
     if (pathname.startsWith("/instructor") && role !== "instructor" && role !== "admin") {
-      return NextResponse.redirect(new URL("/student/dashboard", request.url));
+      return NextResponse.redirect(new URL(fallback, request.url));
     }
   }
 
