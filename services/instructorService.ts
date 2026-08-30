@@ -139,8 +139,49 @@ export async function getInstructorCourses(token?: string): Promise<InstructorCo
     });
 
     if (res.ok) {
-      const data = await res.json();
-      return Array.isArray(data) ? data : data.data || initialMockInstructorCourses;
+      const json = await res.json();
+      const rawCourses: any[] = Array.isArray(json) ? json : json.data || [];
+      if (rawCourses.length > 0) {
+        return rawCourses.map((c: any, idx: number) => {
+          const rawStudents = c.enrolledStudents || [];
+          const enrolledStudents: EnrolledStudent[] = rawStudents.map((s: any, sIdx: number) => {
+            const studentName = s.name || s.studentName || s.username || "Enrolled Student";
+            const studentEmail = s.email || s.studentEmail || "student@lms.com";
+            const studentUsername = s.username || studentName.toLowerCase().replace(/\s+/g, "_");
+
+            return {
+              id: s.id || s.studentId || sIdx + 1,
+              name: studentName,
+              username: studentUsername,
+              email: studentEmail,
+              avatar: s.avatar,
+              enrolledAt: s.enrolledAt ? new Date(s.enrolledAt).toISOString().split("T")[0] : "2026-08-20",
+              progressPercentage: s.progressPercentage ?? 0,
+              completedLessonsCount: s.completedLessonsCount ?? 0,
+              totalLessons: s.totalLessons ?? c.totalLessons ?? 1,
+              lastActiveAt: s.lastActiveAt || "Active recently",
+              quizScore: s.quizScore,
+            };
+          });
+
+          const totalProg = enrolledStudents.reduce((sum, s) => sum + s.progressPercentage, 0);
+          const avgProg = enrolledStudents.length > 0 ? Math.round(totalProg / enrolledStudents.length) : 0;
+
+          return {
+            id: c.id || idx + 1,
+            title: c.title || "Untitled Course",
+            slug: c.slug || "course",
+            coverImage: c.coverImage || c.coverImageUrl || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=60",
+            category: c.category || "Web Development",
+            level: c.level || "Intermediate",
+            totalLessons: c.totalLessons ?? 4,
+            totalStudents: enrolledStudents.length,
+            averageProgress: c.averageProgress ?? avgProg,
+            enrolledStudents,
+            createdAt: c.createdAt,
+          };
+        });
+      }
     }
   } catch {
     // fallback
@@ -153,11 +194,11 @@ export async function getInstructorCourses(token?: string): Promise<InstructorCo
  * Compute overall instructor metrics
  */
 export function computeInstructorMetrics(courses: InstructorCourse[]): InstructorMetrics {
-  const totalCourses = courses.length;
-  const allStudents = courses.flatMap((c) => c.enrolledStudents);
+  const totalCourses = (courses || []).length;
+  const allStudents = (courses || []).flatMap((c) => c.enrolledStudents || []);
   const totalStudents = allStudents.length;
 
-  const totalProgress = allStudents.reduce((sum, s) => sum + s.progressPercentage, 0);
+  const totalProgress = allStudents.reduce((sum, s) => sum + (s.progressPercentage || 0), 0);
   const averageCompletionRate = totalStudents > 0 ? Math.round(totalProgress / totalStudents) : 0;
   const activeThisWeek = allStudents.filter((s) => s.lastActiveAt?.includes("Today") || s.lastActiveAt?.includes("ago") || s.lastActiveAt?.includes("Yesterday")).length;
 

@@ -29,12 +29,25 @@ export default function StudentRosterTable({
 
   // Flatten students with course context
   const allRoster = useMemo(() => {
-    return courses.flatMap((course) =>
-      course.enrolledStudents.map((student) => ({
-        ...student,
-        courseId: course.id,
-        courseTitle: course.title,
-      }))
+    return (courses || []).flatMap((course) =>
+      (course.enrolledStudents || []).map((student: any) => {
+        const studentName = student.name || student.studentName || student.username || "Enrolled Student";
+        const studentEmail = student.email || student.studentEmail || "student@lms.com";
+        const studentUsername = student.username || studentName.toLowerCase().replace(/\s+/g, "_");
+
+        return {
+          ...student,
+          id: student.id || student.studentId || 1,
+          name: studentName,
+          email: studentEmail,
+          username: studentUsername,
+          courseId: course.id,
+          courseTitle: course.title,
+          progressPercentage: student.progressPercentage ?? 0,
+          completedLessonsCount: student.completedLessonsCount ?? 0,
+          totalLessons: student.totalLessons ?? course.totalLessons ?? 1,
+        };
+      })
     );
   }, [courses]);
 
@@ -50,9 +63,9 @@ export default function StudentRosterTable({
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         return (
-          item.name.toLowerCase().includes(q) ||
-          item.email.toLowerCase().includes(q) ||
-          item.username.toLowerCase().includes(q)
+          (item.name || "").toLowerCase().includes(q) ||
+          (item.email || "").toLowerCase().includes(q) ||
+          (item.username || "").toLowerCase().includes(q)
         );
       }
 
@@ -147,7 +160,7 @@ export default function StudentRosterTable({
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-indigo-100 text-indigo-700 text-xs font-bold">
-                          {student.name[0]}
+                          {student.name?.[0] || student.username?.[0] || "S"}
                         </div>
                       )}
                     </div>
