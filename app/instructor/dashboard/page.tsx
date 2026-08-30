@@ -7,6 +7,7 @@ import { InstructorCourse, InstructorMetrics } from "@/types/instructor";
 import InstructorMetricsBanner from "@/components/instructor/InstructorMetricsBanner";
 import InstructorCourseCard from "@/components/instructor/InstructorCourseCard";
 import StudentRosterTable from "@/components/instructor/StudentRosterTable";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { Video, BookOpen, Users, Plus, Sparkles } from "lucide-react";
 
 export default function InstructorDashboardPage() {
@@ -35,7 +36,8 @@ export default function InstructorDashboardPage() {
   }, []);
 
   return (
-    <div className="min-h-screen py-10 lg:py-14 bg-slate-50/50 dark:bg-[#080c14] transition-colors">
+    <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+      <div className="min-h-screen py-10 lg:py-14 bg-slate-50/50 dark:bg-[#080c14] transition-colors">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
         
         {/* Page Header */}
@@ -91,5 +93,6 @@ export default function InstructorDashboardPage() {
 
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

@@ -14,6 +14,7 @@ import { CreateBlogPostPayload, ManagerMetrics } from "@/types/manager";
 import ManagerBlogTable from "@/components/manager/ManagerBlogTable";
 import BlogAuthorModal from "@/components/manager/BlogAuthorModal";
 import CourseCurriculumManager from "@/components/manager/CourseCurriculumManager";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import {
   FileEdit,
   Newspaper,
@@ -85,7 +86,8 @@ export default function ContentManagerPage() {
   };
 
   return (
-    <div className="min-h-screen py-10 lg:py-14 bg-slate-50/50 dark:bg-[#080c14] transition-colors">
+    <ProtectedRoute allowedRoles={["content_manager", "admin"]}>
+      <div className="min-h-screen py-10 lg:py-14 bg-slate-50/50 dark:bg-[#080c14] transition-colors">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
         
         {/* Page Header */}
@@ -226,5 +228,6 @@ export default function ContentManagerPage() {
 
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

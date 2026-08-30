@@ -7,6 +7,7 @@ import { getMyCourses, computeStudentStats } from "@/services/studentService";
 import { EnrolledCourse, StudentStats } from "@/types/student";
 import StudentStatsBanner from "@/components/student/StudentStatsBanner";
 import EnrolledCourseCard from "@/components/student/EnrolledCourseCard";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { BookOpen, PlayCircle, ArrowRight, Sparkles, Plus, GraduationCap } from "lucide-react";
 
 export default function StudentDashboardPage() {
@@ -38,7 +39,8 @@ export default function StudentDashboardPage() {
   const continueCourse = courses.find((c) => c.progressPercentage > 0 && c.progressPercentage < 100) || courses[0];
 
   return (
-    <div className="min-h-screen py-10 lg:py-14 bg-slate-50/50 dark:bg-[#080c14] transition-colors">
+    <ProtectedRoute allowedRoles={["student", "admin"]}>
+      <div className="min-h-screen py-10 lg:py-14 bg-slate-50/50 dark:bg-[#080c14] transition-colors">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
         
         {/* Welcome Header */}
@@ -155,8 +157,8 @@ export default function StudentDashboardPage() {
             </div>
           )}
         </div>
-
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

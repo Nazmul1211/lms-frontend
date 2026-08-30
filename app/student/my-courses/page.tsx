@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getMyCourses } from "@/services/studentService";
 import { EnrolledCourse } from "@/types/student";
 import EnrolledCourseCard from "@/components/student/EnrolledCourseCard";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { BookOpen, Search, X, ChevronRight, Plus } from "lucide-react";
 
 type FilterTab = "all" | "in_progress" | "completed";
@@ -51,7 +52,8 @@ export default function MyCoursesPage() {
   }, [courses, activeTab, searchQuery]);
 
   return (
-    <div className="min-h-screen py-10 lg:py-14 bg-slate-50/50 dark:bg-[#080c14] transition-colors">
+    <ProtectedRoute allowedRoles={["student", "admin"]}>
+      <div className="min-h-screen py-10 lg:py-14 bg-slate-50/50 dark:bg-[#080c14] transition-colors">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Breadcrumb Navigation */}
@@ -177,6 +179,7 @@ export default function MyCoursesPage() {
         )}
 
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

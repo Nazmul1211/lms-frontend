@@ -7,6 +7,7 @@ import { AdminStats, AdminUser, AvailableRole } from "@/types/admin";
 import AdminStatsGrid from "@/components/admin/AdminStatsGrid";
 import UserRoleManagementTable from "@/components/admin/UserRoleManagementTable";
 import RolePermissionsMatrix from "@/components/admin/RolePermissionsMatrix";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { Shield, ShieldAlert, Users, Layers, Activity } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -52,7 +53,8 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen py-10 lg:py-14 bg-slate-50/50 dark:bg-[#080c14] transition-colors">
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <div className="min-h-screen py-10 lg:py-14 bg-slate-50/50 dark:bg-[#080c14] transition-colors">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
         
         {/* Page Header */}
@@ -86,5 +88,6 @@ export default function AdminDashboardPage() {
 
       </div>
     </div>
+    </ProtectedRoute>
   );
 }
